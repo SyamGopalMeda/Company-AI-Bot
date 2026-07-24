@@ -6,6 +6,7 @@ import { FaDatabase, FaCheckCircle, FaSpinner, FaComments, FaCode, FaAlignLeft }
 export default function KnowledgeBase() {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -16,15 +17,30 @@ export default function KnowledgeBase() {
         }
 
         getCompanyData(companyId).then(res => {
+            // Note: If the backend fails or static HTML is returned, handle it
+            if (typeof res === 'string' && res.includes('<!DOCTYPE html>')) {
+                throw new Error("Received HTML instead of JSON. The backend API is unreachable or VITE_API_URL is misconfigured.");
+            }
             setData(res);
             setLoading(false);
-        }).catch(() => setLoading(false));
+        }).catch((err) => {
+            console.error("API Error:", err);
+            setError("Failed to connect to the backend. Ensure VITE_API_URL is set in Render.");
+            setLoading(false);
+        });
     }, []);
 
     if (loading) return (
         <div className="flex flex-col items-center justify-center h-64 text-purple-500 gap-4">
             <FaSpinner className="animate-spin text-4xl" />
             <span className="text-gray-400 font-medium">Retrieving Knowledge Base...</span>
+        </div>
+    );
+    
+    if (error) return (
+        <div className="text-center py-12">
+            <div className="text-red-400 font-semibold mb-2">Network Error</div>
+            <div className="text-gray-400 max-w-md mx-auto">{error}</div>
         </div>
     );
     

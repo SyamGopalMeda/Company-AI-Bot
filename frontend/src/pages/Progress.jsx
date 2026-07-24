@@ -18,6 +18,12 @@ export default function Progress() {
             setProgress(data);
         };
 
+        source.onerror = (err) => {
+            console.error("EventSource Error:", err);
+            setProgress({ status: 'error', error: 'Failed to establish telemetry connection. Ensure backend is running and VITE_API_URL is correctly set in Render.' });
+            source.close();
+        };
+
         return () => {
             source.close();
         };
@@ -52,6 +58,11 @@ export default function Progress() {
                         <div className="flex flex-col items-center justify-center py-16 text-purple-400 gap-4">
                             <FaSpinner className="animate-spin text-4xl" />
                             <span className="text-lg font-medium tracking-wide">Establishing telemetry connection...</span>
+                        </div>
+                    ) : progress.status === 'error' ? (
+                        <div className="flex flex-col items-center justify-center py-16 text-red-400 gap-4 text-center">
+                            <div className="text-xl font-bold">Connection Failed</div>
+                            <span className="text-gray-400 font-medium max-w-md">{progress.error}</span>
                         </div>
                     ) : (
                         <div className="space-y-8 animate-fade-in">

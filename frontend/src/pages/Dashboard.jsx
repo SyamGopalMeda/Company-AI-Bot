@@ -9,15 +9,24 @@ export default function Dashboard() {
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
     const [saved, setSaved] = useState(false);
+    const [error, setError] = useState('');
     const navigate = useNavigate();
 
     useEffect(() => {
         if (companyId) {
             setLoading(true);
+            setError('');
             getCompanyData(companyId).then(res => {
+                if (typeof res === 'string' && res.includes('<!DOCTYPE html>')) {
+                    throw new Error("API Unreachable: Verify VITE_API_URL in Render");
+                }
                 if (res) setData({ companyName: res.companyName || '', description: res.description || '' });
                 setLoading(false);
-            }).catch(() => setLoading(false));
+            }).catch((err) => {
+                console.error(err);
+                setError("Failed to connect to backend. Verify VITE_API_URL is set in Render.");
+                setLoading(false);
+            });
         }
     }, [companyId]);
 
@@ -26,13 +35,15 @@ export default function Dashboard() {
         localStorage.setItem('activeCompanyId', companyId);
         
         setSaving(true);
+        setError('');
         try {
             await saveCompanyData(companyId, data);
             setSaved(true);
             setTimeout(() => setSaved(false), 3000);
             navigate('/admin/scraper');
-        } catch (error) {
-            console.error(error);
+        } catch (err) {
+            console.error(err);
+            setError("Failed to save data. The backend API is unreachable.");
         } finally {
             setSaving(false);
         }
@@ -110,7 +121,13 @@ export default function Dashboard() {
                         </>
                     )}
                     
-                    <div className="pt-6 flex justify-end">
+                    {error && (
+                        <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl text-sm font-medium">
+                            {error}
+                        </div>
+                    )}
+                    
+                    <div className="pt-4 flex justify-end">
                         <button 
                             onClick={handleSave} 
                             disabled={saving || !companyId}
