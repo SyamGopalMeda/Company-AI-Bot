@@ -10,7 +10,7 @@ export default function KnowledgeBase() {
     const navigate = useNavigate();
 
     useEffect(() => {
-        const companyId = localStorage.getItem('activeCompanyId');
+        const companyId = localStorage.getItem('activeCompanyId') || import.meta.env.VITE_PUBLIC_COMPANY_ID || 'gloomdev';
         if (!companyId) {
             setLoading(false);
             return;

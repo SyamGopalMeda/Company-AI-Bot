@@ -11,7 +11,7 @@ export default function ChatWidget({ isPublic }) {
     const [loading, setLoading] = useState(false);
     const [companyName, setCompanyName] = useState('Assistant');
     const messagesEndRef = useRef(null);
-    const companyId = localStorage.getItem('activeCompanyId') || 'default-company';
+    const companyId = import.meta.env.VITE_PUBLIC_COMPANY_ID || localStorage.getItem('activeCompanyId') || 'gloomdev';
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
