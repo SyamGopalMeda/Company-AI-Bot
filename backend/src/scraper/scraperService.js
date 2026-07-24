@@ -13,6 +13,42 @@ async function getBrowser() {
     return browserInstance;
 }
 
+async function scrapeSinglePageFallback(targetUrl) {
+    try {
+        console.log(`Using fallback fetch for ${targetUrl}`);
+        const response = await fetch(targetUrl);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        const html = await response.text();
+        
+        const links = [];
+        const linkRegex = /<a[^>]+href=["']([^"']+)["']/gi;
+        let match;
+        while ((match = linkRegex.exec(html)) !== null) {
+            links.push(match[1]);
+        }
+
+        // Extremely simple HTML to text conversion for the fallback
+        let textOutput = `Page Title: ${targetUrl}\n\n`;
+        const bodyMatch = html.match(/<body[^>]*>([\s\S]*)<\/body>/i);
+        const contentHtml = bodyMatch ? bodyMatch[1] : html;
+        
+        const cleanText = contentHtml
+            .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+            .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+            .replace(/<nav[^>]*>[\s\S]*?<\/nav>/gi, '')
+            .replace(/<footer[^>]*>[\s\S]*?<\/footer>/gi, '')
+            .replace(/<[^>]+>/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+            
+        textOutput += cleanText;
+        return { text: textOutput, links };
+    } catch (err) {
+        console.error(`Fallback scraping failed for ${targetUrl}:`, err.message);
+        return { text: '', links: [] };
+    }
+}
+
 async function scrapeSinglePage(targetUrl) {
     let page = null;
     try {
@@ -70,9 +106,9 @@ async function scrapeSinglePage(targetUrl) {
         await page.close();
         return extractedData;
     } catch (error) {
-        console.error(`Error scraping ${targetUrl}:`, error.message);
+        console.error(`Puppeteer failed for ${targetUrl}, trying fallback...`, error.message);
         if (page) await page.close().catch(() => {});
-        return { text: '', links: [] };
+        return await scrapeSinglePageFallback(targetUrl);
     }
 }
 
