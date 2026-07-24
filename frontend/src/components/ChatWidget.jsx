@@ -4,6 +4,26 @@ import { FaPaperPlane, FaRobot, FaUser, FaCircleNotch, FaDotCircle, FaCog, FaTim
 import { Link } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 
+const TypewriterText = ({ text, onComplete }) => {
+    const [displayedText, setDisplayedText] = useState('');
+    const [currentIndex, setCurrentIndex] = useState(0);
+
+    useEffect(() => {
+        if (currentIndex < text.length) {
+            const timeout = setTimeout(() => {
+                const nextIndex = Math.min(currentIndex + 3, text.length);
+                setDisplayedText(text.slice(0, nextIndex));
+                setCurrentIndex(nextIndex);
+            }, 15);
+            return () => clearTimeout(timeout);
+        } else if (onComplete) {
+            onComplete();
+        }
+    }, [currentIndex, text, onComplete]);
+
+    return <ReactMarkdown>{displayedText}</ReactMarkdown>;
+};
+
 export default function ChatWidget({ isPublic }) {
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState([]);
@@ -55,9 +75,9 @@ export default function ChatWidget({ isPublic }) {
 
         try {
             const res = await sendChatMessage(companyId, input, messages);
-            setMessages([...newHistory, { role: 'bot', text: res.reply }]);
+            setMessages([...newHistory, { role: 'bot', text: res.reply, isTyping: true }]);
         } catch (error) {
-            setMessages([...newHistory, { role: 'bot', text: 'Sorry, I encountered a system error while processing your request.' }]);
+            setMessages([...newHistory, { role: 'bot', text: 'Sorry, I encountered a system error while processing your request.', isTyping: true }]);
         } finally {
             setLoading(false);
         }
@@ -110,7 +130,18 @@ export default function ChatWidget({ isPublic }) {
                                 </div>
                                 <div className={msg.role === 'bot' ? 'bg-gray-800 border border-gray-700 text-gray-200 px-4 py-2.5 rounded-2xl rounded-tl-sm text-sm' : 'bg-purple-600 text-white px-4 py-2.5 rounded-2xl rounded-tr-sm text-sm'}>
                                     {msg.role === 'bot' ? (
-                                        <div className="markdown-body"><ReactMarkdown>{msg.text}</ReactMarkdown></div>
+                                        <div className="markdown-body">
+                                            {msg.isTyping ? (
+                                                <TypewriterText 
+                                                    text={msg.text} 
+                                                    onComplete={() => {
+                                                        setMessages(msgs => msgs.map(m => m === msg ? { ...m, isTyping: false } : m));
+                                                    }} 
+                                                />
+                                            ) : (
+                                                <ReactMarkdown>{msg.text}</ReactMarkdown>
+                                            )}
+                                        </div>
                                     ) : (
                                         msg.text.split('\n').map((line, i) => (
                                             <span key={i}>
