@@ -15,13 +15,19 @@ export default function Chat() {
 
     useEffect(() => {
         getCompanyData().then(data => {
-            const companyName = data?.companyName || "the company";
-            setMessages([
-                { role: 'bot', text: `Hello! I am the virtual assistant for ${companyName}. How can I assist you today?` }
-            ]);
+            const companyName = data?.companyName;
+            if (companyName) {
+                setMessages([
+                    { role: 'bot', text: `Hi there! I'm Alex from the ${companyName} team. How can I help you today?` }
+                ]);
+            } else {
+                setMessages([
+                    { role: 'bot', text: `Hi there! I'm Alex. How can I help you today?` }
+                ]);
+            }
         }).catch(() => {
             setMessages([
-                { role: 'bot', text: `Hello! I am the virtual assistant here to help. How can I assist you today?` }
+                { role: 'bot', text: `Hi there! I'm Alex. How can I help you today?` }
             ]);
         });
     }, []);

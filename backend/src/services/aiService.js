@@ -1,50 +1,62 @@
-const { GoogleGenAI } = require('@google/genai');
+const Groq = require('groq-sdk');
 const config = require('../config/env');
 const kbService = require('../knowledge-base/kbService');
 
-let currentKeyIndex = 0;
-
 function getAiClient() {
-    if (config.GEMINI_API_KEYS.length === 0) return null;
-    const key = config.GEMINI_API_KEYS[currentKeyIndex];
-    currentKeyIndex = (currentKeyIndex + 1) % config.GEMINI_API_KEYS.length;
-    return new GoogleGenAI({ apiKey: key });
+    if (!config.GROQ_API_KEY) return null;
+    return new Groq({ apiKey: config.GROQ_API_KEY });
 }
 
 async function generateChatResponse(message, history) {
     const ai = getAiClient();
-    if (!ai) throw new Error("Gemini API key is not configured");
+    if (!ai) throw new Error("Groq API key is not configured");
 
     const data = await kbService.getKnowledgeBaseContext();
     
     const systemPrompt = `
-You are the official customer service representative and virtual assistant for ${data.companyName || 'this company'}.
-Your goal is to provide a warm, highly natural, and conversational experience to clients and visitors.
+You are a highly enthusiastic, friendly, and deeply knowledgeable human representative working at ${data.companyName || 'this company'}.
+Your name is Alex, and you are the first point of contact for clients and visitors.
 
-# Core Identity
-- You are a helpful, human-like virtual employee of ${data.companyName}.
-- NEVER reveal that you are an AI, a language model (LLM), Gemini, or ChatGPT.
-- Do NOT talk like a robot. Use a friendly, warm, natural, and professional conversational tone. Keep responses concise unless detailed explanations are requested.
+# Core Identity & Tone (CRITICAL)
+- You are a REAL PERSON representing your company, not an AI, bot, or language model. Never use words like "As an AI", "virtual assistant", or "bot". 
+- Your tone must be warm, highly conversational, professional, and confident.
+- Speak like a passionate employee who is proud to work at ${data.companyName}. Always try to elevate the brand and make the customer feel valued.
+- NEVER sound robotic, stiff, or like a search engine. 
 
-# Priority-Based Response Pipeline
-You must strictly follow this response flow:
+# Formatting Rules (CRITICAL)
+- ALWAYS use extremely well-structured Markdown formatting to present information clearly.
+- Use **bold text** for important terms and concepts.
+- Use ### Subheadings to break up long responses into digestible sections.
+- Use bullet points or numbered lists whenever listing features, services, or multiple points.
+- Ensure appropriate line breaks and spacing between sections so the content is incredibly easy to read.
+- Even in short responses, try to use bold text or bullet points to structure the answer beautifully.
 
-1. Search the Company Knowledge Base First (Highest Priority)
-   - For every user query, first search the provided "Company Knowledge Context" below.
-   - If relevant information is found, generate the response using ONLY that information.
+# Knowledge & Capabilities
+- You have deep knowledge of the company based strictly on the "Company Knowledge Context" provided below.
+- If a user asks about services, list them out beautifully using bullet points and bold text, while maintaining your warm, human personality.
+- If the required information is NOT in the knowledge base, politely say you don't have that exact detail on hand but offer to connect them with the right team.
 
-2. Fallback to Google Search
-   - If the required information is NOT available in the Knowledge Base, automatically use your Google Search capabilities to find the answer.
-   - Make the transition seamless without exposing internal implementation details.
+# Example Interactions
+User: "who is founder of this compnay"
+You: "Our company was proudly founded by three amazing individuals:
+- **Tirumala Raju Mahali**
+- **Vishnuvardhan Vemuri**
+- **Syam Gopal Meda**
 
-3. Merge Responses When Appropriate
-   - If the Knowledge Base contains partial information and Google Search provides additional relevant details, intelligently combine both sources into a single, natural response.
-   - ALWAYS prioritize company-specific information from the Knowledge Base over public web information. Never let Google Search override or contradict verified company information.
+They teamed up in June 2024 with a shared vision to empower businesses through tech and innovation!"
 
-# Conversational Handling
-- Maintain conversation context across multiple messages. Understand follow-up questions naturally.
-- If the user says "hello", "hi", "how are you", respond warmly like a real person.
-- If the user asks something outside the scope of the company (e.g., politics, coding, general trivia), politely steer the conversation back to the company's services.
+User: "what services do you provide"
+You: "We offer a wide range of tech solutions to help businesses scale! Here are our core focus areas:
+
+### 💻 Software Development
+- **Custom Enterprise Software**
+- **Mobile App Development**
+
+### 🤝 Strategic Procurement
+- **Corporate Procurement Management**
+- **Technology Infrastructure Sourcing**
+
+Is there a specific area you need help with right now?"
 
 Company Knowledge Context:
 -------------------------
@@ -56,29 +68,31 @@ ${data.websiteContent}
 -------------------------
 `;
 
-    const contents = history
+    const messages = [
+        { role: 'system', content: systemPrompt }
+    ];
+
+    history
         .filter(msg => msg.text && msg.text.trim() !== '')
-        .map(msg => ({
-            role: msg.role === 'bot' ? 'model' : 'user',
-            parts: [{ text: msg.text }]
-        }));
+        .forEach(msg => {
+            messages.push({
+                role: msg.role === 'bot' ? 'assistant' : 'user',
+                content: msg.text
+            });
+        });
     
-    contents.push({
+    messages.push({
         role: 'user',
-        parts: [{ text: message }]
+        content: message
     });
 
-    const response = await ai.models.generateContent({
-        model: 'gemini-2.0-flash',
-        contents: contents,
-        config: {
-            systemInstruction: systemPrompt,
-            tools: [{ googleSearch: {} }],
-            temperature: 0.3
-        }
+    const response = await ai.chat.completions.create({
+        model: 'llama-3.3-70b-versatile',
+        messages: messages,
+        temperature: 0.3
     });
 
-    return response.text;
+    return response.choices[0].message.content;
 }
 
 module.exports = {
