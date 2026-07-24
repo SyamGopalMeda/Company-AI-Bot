@@ -9,7 +9,7 @@ export default function ChatWidget({ isPublic }) {
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState('');
     const [loading, setLoading] = useState(false);
-    const [companyName, setCompanyName] = useState('Assistant');
+    const [companyName, setCompanyName] = useState('GloomDev');
     const messagesEndRef = useRef(null);
     const companyId = import.meta.env.VITE_PUBLIC_COMPANY_ID || localStorage.getItem('activeCompanyId') || 'gloomdev';
 
@@ -32,7 +32,7 @@ export default function ChatWidget({ isPublic }) {
             }
         }).catch(() => {
             setMessages([
-                { role: 'bot', text: `Hi there! How can I help you today?` }
+                { role: 'bot', text: `Hi there! I'm the AI assistant for GloomDev. How can I help you today?` }
             ]);
         });
     }, [companyId]);

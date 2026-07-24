@@ -7,6 +7,13 @@ import LandingPage from './pages/LandingPage';
 import ChatWidget from './components/ChatWidget';
 import { FaRobot, FaDatabase, FaCogs, FaServer, FaHome } from 'react-icons/fa';
 
+import PublicLayout from './components/public/PublicLayout';
+import Home from './pages/public/Home';
+import About from './pages/public/About';
+import Services from './pages/public/Services';
+import Pricing from './pages/public/Pricing';
+import Contact from './pages/public/Contact';
+
 function Navigation() {
   const location = useLocation();
   const path = location.pathname;
@@ -26,7 +33,7 @@ function Navigation() {
 
   return (
     <nav className="sticky top-6 z-50 max-w-6xl mx-auto px-4 mb-12">
-      <div className="glass-panel py-3 px-4 flex items-center justify-between">
+      <div className="glass-panel py-3 px-4 flex items-center justify-between bg-gray-950/90 border border-gray-800 shadow-xl backdrop-blur-xl">
         <div className="flex items-center gap-3 pl-2">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-600 to-blue-500 flex items-center justify-center shadow-lg shadow-purple-500/30">
             <FaRobot className="text-white text-xl" />
@@ -52,7 +59,7 @@ function Navigation() {
 
 function AdminLayout() {
   return (
-    <div className="min-h-screen pb-20 pt-6 animate-fade-in max-w-6xl mx-auto px-4">
+    <div className="min-h-screen pb-20 pt-6 animate-fade-in max-w-6xl mx-auto px-4 bg-gray-950 text-gray-100 selection:bg-purple-500/30 font-sans">
       <Navigation />
       <Routes>
         <Route path="/" element={<Dashboard />} />
@@ -68,13 +75,19 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={
-          <>
-            <LandingPage />
-            <ChatWidget isPublic={true} />
-          </>
-        } />
+        {/* Public Routes with Shared Layout & Chatbot */}
+        <Route path="/" element={<PublicLayout />}>
+          <Route index element={<Home />} />
+          <Route path="about" element={<About />} />
+          <Route path="services" element={<Services />} />
+          <Route path="pricing" element={<Pricing />} />
+          <Route path="contact" element={<Contact />} />
+        </Route>
+
+        {/* Admin Routes */}
         <Route path="/admin/*" element={<AdminLayout />} />
+
+        {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
