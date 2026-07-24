@@ -1,20 +1,22 @@
 import { useState, useRef, useEffect } from 'react';
 import { sendChatMessage, getCompanyData } from '../services/api';
-import { FaPaperPlane, FaRobot, FaUser, FaCircleNotch, FaDotCircle } from 'react-icons/fa';
+import { FaPaperPlane, FaRobot, FaUser, FaCircleNotch, FaDotCircle, FaCog } from 'react-icons/fa';
+import { Link } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 
-export default function Chat() {
+export default function Chat({ isPublic }) {
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState('');
     const [loading, setLoading] = useState(false);
     const messagesEndRef = useRef(null);
+    const companyId = localStorage.getItem('activeCompanyId') || 'default-company';
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
 
     useEffect(() => {
-        getCompanyData().then(data => {
+        getCompanyData(companyId).then(data => {
             const companyName = data?.companyName;
             if (companyName) {
                 setMessages([
@@ -30,7 +32,7 @@ export default function Chat() {
                 { role: 'bot', text: `Hi there! I'm Alex. How can I help you today?` }
             ]);
         });
-    }, []);
+    }, [companyId]);
 
     useEffect(() => {
         scrollToBottom();
@@ -47,7 +49,7 @@ export default function Chat() {
         setLoading(true);
 
         try {
-            const res = await sendChatMessage(input, messages);
+            const res = await sendChatMessage(companyId, input, messages);
             setMessages([...newHistory, { role: 'bot', text: res.reply }]);
         } catch (error) {
             setMessages([...newHistory, { role: 'bot', text: 'Sorry, I encountered a system error while processing your request.' }]);
@@ -61,19 +63,27 @@ export default function Chat() {
             <div className="glass-panel flex flex-col h-full overflow-hidden">
                 
                 {/* Chat Header */}
-                <div className="px-6 py-4 border-b border-gray-800 bg-gray-900/80 flex items-center gap-4">
-                    <div className="relative">
-                        <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-purple-600 to-blue-500 flex items-center justify-center shadow-lg shadow-purple-500/20">
-                            <FaRobot className="text-white text-xl" />
+                <div className="px-6 py-4 border-b border-gray-800 bg-gray-900/80 flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                        <div className="relative">
+                            <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-purple-600 to-blue-500 flex items-center justify-center shadow-lg shadow-purple-500/20">
+                                <FaRobot className="text-white text-xl" />
+                            </div>
+                            <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-gray-900 rounded-full"></div>
                         </div>
-                        <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-gray-900 rounded-full"></div>
-                    </div>
-                    <div>
-                        <h2 className="text-xl font-bold text-white">AI Knowledge Assistant</h2>
-                        <div className="flex items-center gap-1.5 text-xs font-semibold text-green-400 uppercase tracking-wider mt-0.5">
-                            <FaDotCircle className="text-[10px]" /> Online & Ready
+                        <div>
+                            <h2 className="text-xl font-bold text-white">AI Knowledge Assistant</h2>
+                            <div className="flex items-center gap-1.5 text-xs font-semibold text-green-400 uppercase tracking-wider mt-0.5">
+                                <FaDotCircle className="text-[10px]" /> Online & Ready
+                            </div>
                         </div>
                     </div>
+                    
+                    {isPublic && (
+                        <Link to="/admin" className="text-gray-500 hover:text-purple-400 transition-colors p-2" title="Admin Settings">
+                            <FaCog size={20} />
+                        </Link>
+                    )}
                 </div>
 
                 {/* Chat Messages */}
@@ -87,9 +97,9 @@ export default function Chat() {
                             }`}>
                                 {msg.role === 'bot' ? <FaRobot size={14} /> : <FaUser size={14} />}
                             </div>
-                            <div className={msg.role === 'bot' ? 'chat-bubble-bot markdown-body' : 'chat-bubble-user'}>
+                            <div className={msg.role === 'bot' ? 'chat-bubble-bot' : 'chat-bubble-user'}>
                                 {msg.role === 'bot' ? (
-                                    <ReactMarkdown>{msg.text}</ReactMarkdown>
+                                    <div className="markdown-body"><ReactMarkdown>{msg.text}</ReactMarkdown></div>
                                 ) : (
                                     msg.text.split('\n').map((line, i) => (
                                         <span key={i}>

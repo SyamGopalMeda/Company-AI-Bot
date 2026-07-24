@@ -8,8 +8,8 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.use('/', adminRoutes);
-app.use('/', chatRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api', chatRoutes);
 
 app.listen(env.PORT, () => {
     console.log(`Server running on port ${env.PORT}`);

@@ -8,7 +8,10 @@ export default function Progress() {
     const navigate = useNavigate();
 
     useEffect(() => {
-        const source = getProgressEventSource();
+        const companyId = localStorage.getItem('activeCompanyId');
+        if (!companyId) return;
+
+        const source = getProgressEventSource(companyId);
         
         source.onmessage = (event) => {
             const data = JSON.parse(event.data);
@@ -103,7 +106,7 @@ export default function Progress() {
                             {isComplete && (
                                 <div className="flex justify-end animate-fade-in">
                                     <button 
-                                        onClick={() => navigate('/kb')}
+                                        onClick={() => navigate('/admin/kb')}
                                         className="premium-button-primary px-8"
                                     >
                                         Verify Knowledge Base <FaArrowRight className="ml-2" />

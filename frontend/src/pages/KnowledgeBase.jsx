@@ -9,7 +9,13 @@ export default function KnowledgeBase() {
     const navigate = useNavigate();
 
     useEffect(() => {
-        getCompanyData().then(res => {
+        const companyId = localStorage.getItem('activeCompanyId');
+        if (!companyId) {
+            setLoading(false);
+            return;
+        }
+
+        getCompanyData(companyId).then(res => {
             setData(res);
             setLoading(false);
         }).catch(() => setLoading(false));
@@ -20,6 +26,10 @@ export default function KnowledgeBase() {
             <FaSpinner className="animate-spin text-4xl" />
             <span className="text-gray-400 font-medium">Retrieving Knowledge Base...</span>
         </div>
+    );
+    
+    if (!data && !loading) return (
+        <div className="text-center py-12 text-gray-400">Please select a company in the Company Profiles tab.</div>
     );
 
     return (

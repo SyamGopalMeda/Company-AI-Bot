@@ -1,63 +1,70 @@
 const fs = require('fs/promises');
 const path = require('path');
 
-const KNOWLEDGE_DIR = path.join(__dirname, '../../Knowledge Base');
+const KNOWLEDGE_BASE_ROOT = path.join(__dirname, '../../Knowledge Base');
 
-async function ensureDir() {
-    await fs.mkdir(KNOWLEDGE_DIR, { recursive: true });
+async function getCompanyDir(companyId) {
+    if (!companyId) throw new Error("companyId is required");
+    const dir = path.join(KNOWLEDGE_BASE_ROOT, companyId);
+    await fs.mkdir(dir, { recursive: true });
+    return dir;
 }
 
-async function wipeKnowledgeBase() {
+async function wipeKnowledgeBase(companyId) {
+    const dir = await getCompanyDir(companyId);
     let companyDetails = null;
     try {
-        const detailsRaw = await fs.readFile(path.join(KNOWLEDGE_DIR, 'companyDetails.json'), 'utf-8');
+        const detailsRaw = await fs.readFile(path.join(dir, 'companyDetails.json'), 'utf-8');
         companyDetails = JSON.parse(detailsRaw);
     } catch (e) { /* ignore */ }
 
     try {
-        await fs.rm(KNOWLEDGE_DIR, { recursive: true, force: true });
+        await fs.rm(dir, { recursive: true, force: true });
     } catch (e) {
         // Ignore error if folder doesn't exist
     }
-    await ensureDir();
-
+    
     if (companyDetails) {
-        await saveCompanyDetails(companyDetails.companyName, companyDetails.description);
+        await saveCompanyDetails(companyId, companyDetails.companyName, companyDetails.description);
     }
 }
 
-async function saveCompanyDetails(companyName, description) {
-    await ensureDir();
+async function saveCompanyDetails(companyId, companyName, description) {
+    const dir = await getCompanyDir(companyId);
     await fs.writeFile(
-        path.join(KNOWLEDGE_DIR, 'companyDetails.json'),
+        path.join(dir, 'companyDetails.json'),
         JSON.stringify({ companyName, description }, null, 2)
     );
 }
 
-async function saveScrapedContent(url, content) {
-    await ensureDir();
+async function saveScrapedContent(companyId, url, content) {
+    const dir = await getCompanyDir(companyId);
     await fs.writeFile(
-        path.join(KNOWLEDGE_DIR, 'websiteContent.md'),
+        path.join(dir, 'websiteContent.md'),
         `--- Source: ${url} ---\n` + content
     );
 }
 
-async function getKnowledgeBaseContext() {
+async function getKnowledgeBaseContext(companyId) {
     const data = {
         companyName: "",
         description: "",
         websiteContent: ""
     };
     
+    if (!companyId) return data;
+    
     try {
-        const detailsRaw = await fs.readFile(path.join(KNOWLEDGE_DIR, 'companyDetails.json'), 'utf-8');
+        const dir = await getCompanyDir(companyId);
+        const detailsRaw = await fs.readFile(path.join(dir, 'companyDetails.json'), 'utf-8');
         const details = JSON.parse(detailsRaw);
         data.companyName = details.companyName || "";
         data.description = details.description || "";
     } catch (e) { /* ignore */ }
 
     try {
-        data.websiteContent = await fs.readFile(path.join(KNOWLEDGE_DIR, 'websiteContent.md'), 'utf-8');
+        const dir = await getCompanyDir(companyId);
+        data.websiteContent = await fs.readFile(path.join(dir, 'websiteContent.md'), 'utf-8');
     } catch (e) { /* ignore */ }
 
     return data;

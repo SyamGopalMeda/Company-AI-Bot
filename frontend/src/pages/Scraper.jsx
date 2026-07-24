@@ -10,6 +10,11 @@ export default function Scraper() {
     const navigate = useNavigate();
 
     const handleScrape = async () => {
+        const companyId = localStorage.getItem('activeCompanyId');
+        if (!companyId) {
+            setError('No active company selected. Please go back to Company Profiles.');
+            return;
+        }
         if (!url) {
             setError('Please enter a valid website URL.');
             return;
@@ -17,8 +22,8 @@ export default function Scraper() {
         setLoading(true);
         setError('');
         try {
-            await importWebsite(url);
-            navigate('/progress');
+            await importWebsite(companyId, url);
+            navigate('/admin/progress');
         } catch (error) {
             setError(error.response?.data?.error || 'Failed to start scraping');
             setLoading(false);

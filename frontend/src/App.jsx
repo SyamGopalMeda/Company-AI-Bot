@@ -1,10 +1,11 @@
-import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
 import Dashboard from './pages/Dashboard';
 import Scraper from './pages/Scraper';
 import Progress from './pages/Progress';
 import KnowledgeBase from './pages/KnowledgeBase';
-import Chat from './pages/Chat';
-import { FaRobot, FaDatabase, FaCogs, FaServer, FaComments } from 'react-icons/fa';
+import LandingPage from './pages/LandingPage';
+import ChatWidget from './components/ChatWidget';
+import { FaRobot, FaDatabase, FaCogs, FaServer, FaHome } from 'react-icons/fa';
 
 function Navigation() {
   const location = useLocation();
@@ -24,46 +25,58 @@ function Navigation() {
   );
 
   return (
-    <nav className="sticky top-6 z-50 max-w-5xl mx-auto px-4 mb-12">
+    <nav className="sticky top-6 z-50 max-w-6xl mx-auto px-4 mb-12">
       <div className="glass-panel py-3 px-4 flex items-center justify-between">
         <div className="flex items-center gap-3 pl-2">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-600 to-blue-500 flex items-center justify-center shadow-lg shadow-purple-500/30">
             <FaRobot className="text-white text-xl" />
           </div>
           <div>
-            <h1 className="font-bold text-lg tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">Enterprise AI</h1>
-            <div className="text-[10px] uppercase tracking-wider text-purple-400 font-semibold">Knowledge Platform</div>
+            <h1 className="font-bold text-lg tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">Developer Dashboard</h1>
+            <div className="text-[10px] uppercase tracking-wider text-purple-400 font-semibold">SDK Admin Panel</div>
           </div>
         </div>
         
         <div className="flex items-center gap-1">
-          <NavItem to="/" icon={<FaServer />} label="Dashboard" />
-          <NavItem to="/scraper" icon={<FaDatabase />} label="Scraper" />
-          <NavItem to="/progress" icon={<FaCogs />} label="Progress" />
-          <NavItem to="/kb" icon={<FaDatabase />} label="Knowledge Base" />
+          <NavItem to="/admin" icon={<FaServer />} label="Company Profiles" />
+          <NavItem to="/admin/scraper" icon={<FaDatabase />} label="Scraper" />
+          <NavItem to="/admin/progress" icon={<FaCogs />} label="Jobs" />
+          <NavItem to="/admin/kb" icon={<FaDatabase />} label="Knowledge Base" />
           <div className="w-px h-6 bg-gray-800 mx-2"></div>
-          <NavItem to="/chat" icon={<FaComments />} label="AI Chat" />
+          <NavItem to="/" icon={<FaHome />} label="Back to Site" />
         </div>
       </div>
     </nav>
   );
 }
 
+function AdminLayout() {
+  return (
+    <div className="min-h-screen pb-20 pt-6 animate-fade-in max-w-6xl mx-auto px-4">
+      <Navigation />
+      <Routes>
+        <Route path="/" element={<Dashboard />} />
+        <Route path="/scraper" element={<Scraper />} />
+        <Route path="/progress" element={<Progress />} />
+        <Route path="/kb" element={<KnowledgeBase />} />
+      </Routes>
+    </div>
+  );
+}
+
 function App() {
   return (
     <BrowserRouter>
-      <div className="min-h-screen pb-20">
-        <Navigation />
-        <main className="animate-fade-in max-w-5xl mx-auto px-4">
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/scraper" element={<Scraper />} />
-            <Route path="/progress" element={<Progress />} />
-            <Route path="/kb" element={<KnowledgeBase />} />
-            <Route path="/chat" element={<Chat />} />
-          </Routes>
-        </main>
-      </div>
+      <Routes>
+        <Route path="/" element={
+          <>
+            <LandingPage />
+            <ChatWidget isPublic={true} />
+          </>
+        } />
+        <Route path="/admin/*" element={<AdminLayout />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
     </BrowserRouter>
   );
 }

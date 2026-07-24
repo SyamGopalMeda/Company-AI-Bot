@@ -7,11 +7,12 @@ function getAiClient() {
     return new Groq({ apiKey: config.GROQ_API_KEY });
 }
 
-async function generateChatResponse(message, history) {
+async function generateChatResponse(message, history, companyId) {
     const ai = getAiClient();
     if (!ai) throw new Error("Groq API key is not configured");
+    if (!companyId) throw new Error("companyId is required");
 
-    const data = await kbService.getKnowledgeBaseContext();
+    const data = await kbService.getKnowledgeBaseContext(companyId);
     
     const systemPrompt = `
 You are a highly enthusiastic, friendly, and deeply knowledgeable human representative working at ${data.companyName || 'this company'}.
