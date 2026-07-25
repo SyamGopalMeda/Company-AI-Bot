@@ -1,15 +1,7 @@
-const Groq = require('groq-sdk');
-const config = require('../config/env');
 const kbService = require('../knowledge-base/kbService');
-
-function getAiClient() {
-    if (!config.GROQ_API_KEY) return null;
-    return new Groq({ apiKey: config.GROQ_API_KEY });
-}
+const AiProviderManager = require('./AiProviderManager');
 
 async function generateChatResponse(message, history, companyId) {
-    const ai = getAiClient();
-    if (!ai) throw new Error("Groq API key is not configured");
     if (!companyId) throw new Error("companyId is required");
 
     const data = await kbService.getKnowledgeBaseContext(companyId);
@@ -66,31 +58,9 @@ ${data.websiteContent}
 -------------------------
 `;
 
-    const messages = [
-        { role: 'system', content: systemPrompt }
-    ];
-
-    history
-        .filter(msg => msg.text && msg.text.trim() !== '')
-        .forEach(msg => {
-            messages.push({
-                role: msg.role === 'bot' ? 'assistant' : 'user',
-                content: msg.text
-            });
-        });
-    
-    messages.push({
-        role: 'user',
-        content: message
-    });
-
-    const response = await ai.chat.completions.create({
-        model: 'llama-3.3-70b-versatile',
-        messages: messages,
-        temperature: 0.3
-    });
-
-    return response.choices[0].message.content;
+    // Delegate to AiProviderManager
+    const providerManager = AiProviderManager.getInstance();
+    return await providerManager.generateResponse(message, history, systemPrompt);
 }
 
 module.exports = {

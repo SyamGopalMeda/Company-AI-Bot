@@ -11,5 +11,6 @@ router.get('/:companyId/company-data', adminController.getCompanyData);
 router.post('/:companyId/save-company-data', adminController.saveCompanyData);
 router.post('/:companyId/import-website', adminController.importWebsite);
 router.get('/:companyId/scraping-progress', adminController.scrapingProgress);
+router.get('/providers/status', adminController.getProviderStatus);
 
 module.exports = router;

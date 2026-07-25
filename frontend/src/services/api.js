@@ -42,4 +42,9 @@ export const getProgressEventSource = (companyId) => {
     return new EventSource(`${API_URL}/api/admin/${companyId}/scraping-progress`);
 };
 
+export const getProviderStatus = async () => {
+    const res = await api.get('/api/admin/providers/status');
+    return res.data;
+};
+
 export default api;

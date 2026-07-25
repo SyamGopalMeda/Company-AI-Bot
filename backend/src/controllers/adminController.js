@@ -105,10 +105,21 @@ function scrapingProgress(req, res) {
     });
 }
 
+function getProviderStatus(req, res) {
+    const AiProviderManager = require('../services/AiProviderManager');
+    try {
+        const stats = AiProviderManager.getInstance().getStats();
+        res.json(stats);
+    } catch (error) {
+        res.status(500).json({ error: "Failed to get provider status" });
+    }
+}
+
 module.exports = {
     login,
     getCompanyData,
     saveCompanyData,
     importWebsite,
-    scrapingProgress
+    scrapingProgress,
+    getProviderStatus
 };
