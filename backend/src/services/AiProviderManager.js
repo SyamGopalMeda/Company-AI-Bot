@@ -86,6 +86,7 @@ class AiProviderManager {
             healthyGemini.sort((a, b) => {
                 const aAvg = a.requests > 0 ? a.latencySum / a.requests : 0;
                 const bAvg = b.requests > 0 ? b.latencySum / b.requests : 0;
+                if (aAvg === bAvg) return Math.random() - 0.5; // Randomize equally loaded providers
                 return aAvg - bAvg;
             });
             return healthyGemini[0]; // Return the one with the lowest average latency
@@ -97,6 +98,7 @@ class AiProviderManager {
             healthyGroq.sort((a, b) => {
                 const aAvg = a.requests > 0 ? a.latencySum / a.requests : 0;
                 const bAvg = b.requests > 0 ? b.latencySum / b.requests : 0;
+                if (aAvg === bAvg) return Math.random() - 0.5;
                 return aAvg - bAvg;
             });
             return healthyGroq[0];
@@ -165,6 +167,14 @@ class AiProviderManager {
     }
 
     async _executeWithRetries(message, history, systemPrompt) {
+        const TIMEOUT_MS = 6000; // 6 second strict timeout per provider attempt
+        const withTimeout = (promise, ms) => {
+            return Promise.race([
+                promise,
+                new Promise((_, reject) => setTimeout(() => reject(new Error(`Timeout after ${ms}ms`)), ms))
+            ]);
+        };
+
         let retries = 0;
         let lastError = null;
 
@@ -205,14 +215,14 @@ class AiProviderManager {
                         parts: [{ text: message }]
                     });
 
-                    const response = await provider.client.models.generateContent({
+                    const response = await withTimeout(provider.client.models.generateContent({
                         model: this.geminiModel,
                         contents: contents,
                         config: {
                             systemInstruction: systemPrompt,
                             temperature: 0.3
                         }
-                    });
+                    }), TIMEOUT_MS);
                     
                     responseText = response.text;
                 } else {
@@ -226,11 +236,11 @@ class AiProviderManager {
                     });
                     messages.push({ role: 'user', content: message });
 
-                    const response = await provider.client.chat.completions.create({
+                    const response = await withTimeout(provider.client.chat.completions.create({
                         model: this.groqModel,
                         messages: messages,
                         temperature: 0.3
-                    });
+                    }), TIMEOUT_MS);
 
                     responseText = response.choices[0].message.content;
                 }

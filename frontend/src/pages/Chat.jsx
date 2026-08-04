@@ -59,8 +59,8 @@ export default function Chat({ isPublic }) {
     };
 
     return (
-        <div className="max-w-4xl mx-auto py-6 h-[85vh] flex flex-col">
-            <div className="glass-panel flex flex-col h-full overflow-hidden">
+        <div className="max-w-4xl mx-auto md:py-6 py-0 h-[100dvh] md:h-[85vh] flex flex-col w-full">
+            <div className="glass-panel flex flex-col h-full overflow-hidden md:rounded-2xl rounded-none md:border border-0">
                 
                 {/* Chat Header */}
                 <div className="px-6 py-4 border-b border-gray-800 bg-gray-900/80 flex items-center justify-between">
